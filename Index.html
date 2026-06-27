@@ -1,0 +1,308 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เครื่องคำนวณสูตร Premium Diffuser</title>
+    <!-- ใช้ Tailwind CSS สำหรับโครงสร้างดีไซน์ที่ทันสมัยและตอบสนองได้ทุกอุปกรณ์ -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body class="p-3 sm:p-6 md:p-8 min-h-screen flex items-start justify-center">
+
+    <div class="max-w-4xl w-full bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6 md:p-10">
+        
+        <!-- ส่วนหัว (Header) -->
+        <header class="text-center pb-5 mb-6 border-b border-slate-100">
+            <span class="text-[10px] md:text-xs font-bold tracking-widest text-indigo-600 uppercase">Premium R&D Laboratory</span>
+            <h1 class="text-xl md:text-3xl font-bold text-slate-800 mt-1 md:mt-2">เครื่องคำนวณสูตร Premium Reed Diffuser</h1>
+            <p class="text-xs md:text-sm text-slate-500 mt-1">สูตรปรับปรุงประสิทธิภาพการกระจายกลิ่นและแก้ปัญหาก้านไม้อุดตัน</p>
+        </header>
+
+        <!-- แผงควบคุมและตั้งค่าการคำนวณ (Controls) -->
+        <div class="bg-slate-50 p-4 sm:p-6 rounded-xl border border-slate-100 mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="batchSize" class="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                        ขนาดถังผลิตที่ต้องการ (Batch Size)
+                    </label>
+                    <input 
+                        type="number" 
+                        id="batchSize" 
+                        value="1" 
+                        min="0.01" 
+                        step="any" 
+                        class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base font-medium text-slate-800 transition-all"
+                        oninput="calculateFormula()"
+                    >
+                </div>
+                <div>
+                    <label for="unit" class="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                        หน่วยน้ำหนักการผลิต
+                    </label>
+                    <select 
+                        id="unit" 
+                        class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base font-medium text-slate-800 bg-white cursor-pointer transition-all"
+                        onchange="calculateFormula()"
+                    >
+                        <option value="kg">กิโลกรัม (kg)</option>
+                        <option value="g">กรัม (g)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ปุ่มลัดสำหรับเลือกขนาดถังผลิตด่วน (Quick Presets) มีประโยชน์มากบนมือถือ -->
+            <div class="mt-4 pt-4 border-t border-slate-200/60">
+                <span class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">ปุ่มลัดระบุขนาดถังผลิตด่วน (Presets)</span>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" onclick="setPreset(100, 'g')" class="px-3 py-1.5 text-xs font-medium bg-white text-slate-600 rounded-full border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all active:scale-95">100 กรัม</button>
+                    <button type="button" onclick="setPreset(500, 'g')" class="px-3 py-1.5 text-xs font-medium bg-white text-slate-600 rounded-full border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all active:scale-95">500 กรัม</button>
+                    <button type="button" onclick="setPreset(1, 'kg')" class="px-3 py-1.5 text-xs font-medium bg-white text-slate-600 rounded-full border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all active:scale-95">1 กิโลกรัม</button>
+                    <button type="button" onclick="setPreset(5, 'kg')" class="px-3 py-1.5 text-xs font-medium bg-white text-slate-600 rounded-full border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all active:scale-95">5 กิโลกรัม</button>
+                    <button type="button" onclick="setPreset(10, 'kg')" class="px-3 py-1.5 text-xs font-medium bg-white text-slate-600 rounded-full border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all active:scale-95">10 กิโลกรัม</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. หน้าจอแท็บเล็ต/คอมพิวเตอร์: แสดงผลแบบตารางข้อมูลแบบเดิม (Desktop Table View) -->
+        <div class="hidden md:block overflow-x-auto mb-8">
+            <table class="w-full text-left border-collapse min-w-[600px]">
+                <thead>
+                    <tr class="border-b-2 border-slate-100">
+                        <th class="py-3 px-4 text-xs font-bold text-slate-400 uppercase tracking-wider">สารเคมี / วัตถุดิบ</th>
+                        <th class="py-3 px-4 text-xs font-bold text-slate-400 uppercase tracking-wider">หน้าที่หลักในสูตร</th>
+                        <th class="py-3 px-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">สัดส่วน (%)</th>
+                        <th class="py-3 px-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">น้ำหนักที่ต้องชั่งจริง</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="py-4 px-4 font-medium text-slate-900">1. SOLUTION 100% (Base)</td>
+                        <td class="py-4 px-4 text-slate-500">ตัวทำละลายหลัก / พาตัวกลิ่นระเหย (แนะนำกลุ่ม MMB)</td>
+                        <td class="py-4 px-4 text-right font-medium text-slate-500">70.00%</td>
+                        <td class="py-4 px-4 text-right font-mono font-bold text-indigo-600 text-base desktop-weight" id="w-base">0.00</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="py-4 px-4 font-medium text-slate-900">2. PERFUME / OIL</td>
+                        <td class="py-4 px-4 text-slate-500">หัวเชื้อน้ำหอมเข้มข้นเกรดพรีเมียม</td>
+                        <td class="py-4 px-4 text-right font-medium text-slate-500">20.00%</td>
+                        <td class="py-4 px-4 text-right font-mono font-bold text-indigo-600 text-base desktop-weight" id="w-perfume">0.00</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="py-4 px-4 font-medium text-slate-900">3. CEGESOFT C 24 RC</td>
+                        <td class="py-4 px-4 text-slate-500">สารธรรมชาติช่วยเพิ่มการกระจายกลิ่น</td>
+                        <td class="py-4 px-4 text-right font-medium text-slate-500">5.00%</td>
+                        <td class="py-4 px-4 text-right font-mono font-bold text-indigo-600 text-base desktop-weight" id="w-cegesoft">0.00</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="py-4 px-4 font-medium text-slate-900">4. DIPROPYLENE GLYCOL (DPG)</td>
+                        <td class="py-4 px-4 text-slate-500">สารหน่วงการระเหย / ผสานน้ำหอม (ลดลงเหลือ 4% กันก้านตัน)</td>
+                        <td class="py-4 px-4 text-right font-medium text-slate-500">4.00%</td>
+                        <td class="py-4 px-4 text-right font-mono font-bold text-indigo-600 text-base desktop-weight" id="w-dpg">0.00</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="py-4 px-4 font-medium text-slate-900">5. TONALID CRYST</td>
+                        <td class="py-4 px-4 text-slate-500">สารจับกลิ่น (Fixative) ระดับพรีเมียม (ชนิดผงคริสตัล)</td>
+                        <td class="py-4 px-4 text-right font-medium text-slate-500">1.00%</td>
+                        <td class="py-4 px-4 text-right font-mono font-bold text-indigo-600 text-base desktop-weight" id="w-tonalid">0.00</td>
+                    </tr>
+                    <!-- แถวสรุปน้ำหนักรวม (Total) -->
+                    <tr class="bg-indigo-50/50 font-semibold text-slate-900">
+                        <td class="py-4 px-4 rounded-l-lg font-bold text-slate-800">รวมน้ำหนักสุทธิ (Total Weight)</td>
+                        <td class="py-4 px-4">-</td>
+                        <td class="py-4 px-4 text-right">100.00%</td>
+                        <td class="py-4 px-4 text-right font-mono font-bold text-indigo-700 text-lg rounded-r-lg desktop-weight" id="w-total">0.00</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 2. หน้าจอมือถือ: แสดงผลเป็นรายการการ์ดแนวตั้ง (Mobile Card View) ป้องกันข้อมูลล้นหน้าจอ -->
+        <div class="block md:hidden space-y-3 mb-6">
+            <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">รายการสัดส่วนวัตถุดิบ</span>
+            
+            <!-- การ์ด 1 -->
+            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex justify-between items-center">
+                <div class="pr-2">
+                    <h4 class="font-bold text-slate-800 text-sm">1. SOLUTION 100% (Base)</h4>
+                    <p class="text-xs text-slate-500 mt-0.5">ตัวทำละลายหลัก / พาตัวกลิ่นระเหย (แนะนำ MMB)</p>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <span class="inline-block text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded mb-1">70.00%</span>
+                    <div class="font-mono font-bold text-indigo-600 text-base mobile-weight" id="mb-w-base">0.00</div>
+                </div>
+            </div>
+
+            <!-- การ์ด 2 -->
+            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex justify-between items-center">
+                <div class="pr-2">
+                    <h4 class="font-bold text-slate-800 text-sm">2. PERFUME / OIL</h4>
+                    <p class="text-xs text-slate-500 mt-0.5">หัวเชื้อน้ำหอมเข้มข้นเกรดพรีเมียม</p>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <span class="inline-block text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded mb-1">20.00%</span>
+                    <div class="font-mono font-bold text-indigo-600 text-base mobile-weight" id="mb-w-perfume">0.00</div>
+                </div>
+            </div>
+
+            <!-- การ์ด 3 -->
+            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex justify-between items-center">
+                <div class="pr-2">
+                    <h4 class="font-bold text-slate-800 text-sm">3. CEGESOFT C 24 RC</h4>
+                    <p class="text-xs text-slate-500 mt-0.5">สารธรรมชาติช่วยเพิ่มการกระจายกลิ่น</p>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <span class="inline-block text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded mb-1">5.00%</span>
+                    <div class="font-mono font-bold text-indigo-600 text-base mobile-weight" id="mb-w-cegesoft">0.00</div>
+                </div>
+            </div>
+
+            <!-- การ์ด 4 -->
+            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex justify-between items-center">
+                <div class="pr-2">
+                    <h4 class="font-bold text-slate-800 text-sm">4. DIPROPYLENE GLYCOL (DPG)</h4>
+                    <p class="text-xs text-slate-500 mt-0.5">สารหน่วงการระเหย / ผสานกลิ่นกันก้านตัน</p>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <span class="inline-block text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded mb-1">4.00%</span>
+                    <div class="font-mono font-bold text-indigo-600 text-base mobile-weight" id="mb-w-dpg">0.00</div>
+                </div>
+            </div>
+
+            <!-- การ์ด 5 -->
+            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex justify-between items-center">
+                <div class="pr-2">
+                    <h4 class="font-bold text-slate-800 text-sm">5. TONALID CRYST</h4>
+                    <p class="text-xs text-slate-500 mt-0.5">สารจับกลิ่น (Fixative) ชนิดผงคริสตัล</p>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <span class="inline-block text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded mb-1">1.00%</span>
+                    <div class="font-mono font-bold text-indigo-600 text-base mobile-weight" id="mb-w-tonalid">0.00</div>
+                </div>
+            </div>
+
+            <!-- การ์ดรวมสุทธิ -->
+            <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 shadow-sm flex justify-between items-center font-semibold text-slate-900">
+                <div>
+                    <h4 class="font-bold text-indigo-900 text-sm">รวมน้ำหนักสุทธิทั้งหมด</h4>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <span class="inline-block text-[10px] font-bold px-1.5 py-0.5 bg-indigo-100 text-indigo-600 rounded mb-1">100.00%</span>
+                    <div class="font-mono font-bold text-indigo-700 text-lg mobile-weight" id="mb-w-total">0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- คู่มือขั้นตอนปฏิบัติการมาตรฐานสำหรับการผสมจริง (SOP Section) -->
+        <div class="bg-emerald-50/40 border border-emerald-100 rounded-xl p-4 sm:p-6">
+            <h3 class="text-emerald-800 font-bold text-base md:text-lg mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+                ขั้นตอนปฏิบัติการมาตรฐานการผสม (SOP Mixing Steps)
+            </h3>
+
+            <div class="space-y-4 text-slate-700 text-xs sm:text-sm leading-relaxed">
+                <!-- ขั้นตอนที่ 1 -->
+                <div class="p-3.5 bg-white/60 rounded-xl border border-emerald-50 shadow-sm">
+                    <strong class="text-emerald-700 text-xs sm:text-sm block mb-1">ขั้นตอนที่ 1: ละลายผงคริสตัลสารจับกลิ่น</strong>
+                    ชั่งวัตถุดิบ <span id="sop-dpg" class="inline-block px-1.5 py-0.5 bg-emerald-100/70 text-emerald-800 rounded font-bold font-mono">0.00</span> ของ <strong>DPG</strong> และชั่ง <span id="sop-tonalid" class="inline-block px-1.5 py-0.5 bg-emerald-100/70 text-emerald-800 rounded font-bold font-mono">0.00</span> ของ <strong>TONALID CRYST</strong> ลงในบีกเกอร์ ทำการกวนผสมจนผงคริสตัลละลายหมดจดกลายเป็นของเหลวใสไม่มีเศษตะกอน (หากละลายช้า แนะนำให้อุ่นร้อนระดับอ่อนๆ 40-45°C)
+                </div>
+
+                <!-- ขั้นตอนที่ 2 -->
+                <div class="p-3.5 bg-white/60 rounded-xl border border-emerald-50 shadow-sm">
+                    <strong class="text-emerald-700 text-xs sm:text-sm block mb-1">ขั้นตอนที่ 2: ผสมส่วนน้ำหอมและสารช่วยกระจายกลิ่น</strong>
+                    ชั่งวัตถุดิบ <span id="sop-perfume" class="inline-block px-1.5 py-0.5 bg-emerald-100/70 text-emerald-800 rounded font-bold font-mono">0.00</span> ของ <strong>PERFUME / OIL</strong> และชั่งวัตถุดิบ <span id="sop-cegesoft" class="inline-block px-1.5 py-0.5 bg-emerald-100/70 text-emerald-800 rounded font-bold font-mono">0.00</span> ของ <strong>CEGESOFT C 24 RC</strong> ลงในถังผสมหลัก จากนั้นเทสารละลาย DPG + Tonalid ที่ละลายแล้วเสร็จจากขั้นตอนที่ 1 ตามลงมาผสานร่วมกัน กวนผสมให้เข้ากันเป็นเนื้อเดียว 3-5 นาที
+                </div>
+
+                <!-- ขั้นตอนที่ 3 -->
+                <div class="p-3.5 bg-white/60 rounded-xl border border-emerald-50 shadow-sm">
+                    <strong class="text-emerald-700 text-xs sm:text-sm block mb-1">ขั้นตอนที่ 3: เติมตัวทำละลาย Carrier Base หลัก</strong>
+                    ค่อยๆ เทวัตถุดิบ <span id="sop-base" class="inline-block px-1.5 py-0.5 bg-emerald-100/70 text-emerald-800 rounded font-bold font-mono">0.00</span> ของ <strong>SOLUTION 100% (Base)</strong> ลงในถังผสมหลักอย่างช้าๆ ในขณะที่เครื่องกวนยังทำงานอยู่ กวนผสมต่อเนื่องอย่างน้อย 10-15 นาที สังเกตเนื้อน้ำหอมสุดท้ายต้องมีความใสสะอาด ไม่เกิดการขุ่นมัวหรือแยกชั้น
+                </div>
+
+                <!-- ขั้นตอนที่ 4 -->
+                <div class="p-3.5 bg-white/60 rounded-xl border border-emerald-50 shadow-sm">
+                    <strong class="text-emerald-700 text-xs sm:text-sm block mb-1">ขั้นตอนที่ 4: การบ่มเพื่อความละมุน (Maceration / Aging)</strong>
+                    บรรจุน้ำหอมที่ผสมเสร็จแล้วลงในภาชนะที่ปิดฝาสนิทสุญญากาศ นำไปเก็บไว้ในพื้นที่แห้ง เย็น และพ้นแสงแดด (20-25°C) ปล่อยให้โมเลกุลกลิ่นผสานตัวเข้าคู่กันเป็นเวลาอย่างน้อย <strong>48 - 72 ชั่วโมง</strong> (หรือ 1-2 สัปดาห์เพื่อเกรดที่ดีที่สุด) ก่อนเริ่มกระบวนการบรรจุลงขวดและติดตั้งก้านกระจายกลิ่นเพื่อส่งมอบงานพรีเมียม
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- สคริปต์คำนวณอัตราส่วนทางคณิตศาสตร์แบบเรียลไทม์ -->
+    <script>
+        function calculateFormula() {
+            // ดึงค่าอินพุตจากฟอร์มควบคุม
+            const batchSizeInput = document.getElementById('batchSize');
+            const batchSize = parseFloat(batchSizeInput.value) || 0;
+            const unit = document.getElementById('unit').value;
+            
+            // สัดส่วนเปอร์เซ็นต์ของสูตรพรีเมียมที่ผ่านการปรับแก้เรียบร้อยแล้ว
+            const pBase = 0.70;
+            const pPerfume = 0.20;
+            const pCegesoft = 0.05;
+            const pDpg = 0.04;
+            const pTonalid = 0.01;
+
+            // การคำนวณหาน้ำหนักวัตถุดิบแต่ละตัวตามสัดส่วน
+            const wBase = batchSize * pBase;
+            const wPerfume = batchSize * pPerfume;
+            const wCegesoft = batchSize * pCegesoft;
+            const wDpg = batchSize * pDpg;
+            const wTonalid = batchSize * pTonalid;
+            const wTotal = batchSize;
+
+            // ฟังก์ชันจัดรูปแบบการแสดงผลตัวเลขน้ำหนักพร้อมหน่วยชั่ง
+            function formatVal(value) {
+                if (value === 0) return "0.00 " + unit;
+                // หากเลือกเป็นหน่วยกิโลกรัม แสดงทศนิยม 3 ตำแหน่งเพื่อความแม่นยำระดับกรัม หากเป็นหน่วยกรัมแสดง 2 ตำแหน่ง
+                const decimals = unit === 'kg' ? 3 : 2;
+                return value.toFixed(decimals) + " " + unit;
+            }
+
+            // แสดงผลลัพธ์ลงในตารางสัดส่วน (Desktop Views)
+            document.getElementById('w-base').innerText = formatVal(wBase);
+            document.getElementById('w-perfume').innerText = formatVal(wPerfume);
+            document.getElementById('w-cegesoft').innerText = formatVal(wCegesoft);
+            document.getElementById('w-dpg').innerText = formatVal(wDpg);
+            document.getElementById('w-tonalid').innerText = formatVal(wTonalid);
+            document.getElementById('w-total').innerText = formatVal(wTotal);
+
+            // แสดงผลลัพธ์ลงในการ์ดรายการวัตถุดิบ (Mobile Views)
+            document.getElementById('mb-w-base').innerText = formatVal(wBase);
+            document.getElementById('mb-w-perfume').innerText = formatVal(wPerfume);
+            document.getElementById('mb-w-cegesoft').innerText = formatVal(wCegesoft);
+            document.getElementById('mb-w-dpg').innerText = formatVal(wDpg);
+            document.getElementById('mb-w-tonalid').innerText = formatVal(wTonalid);
+            document.getElementById('mb-w-total').innerText = formatVal(wTotal);
+
+            // แสดงผลลัพธ์อัปเดตน้ำหนักลงในคู่มือการปฏิบัติงานขั้นตอนผสม (SOP) ด้านล่าง
+            document.getElementById('sop-base').innerText = formatVal(wBase);
+            document.getElementById('sop-perfume').innerText = formatVal(wPerfume);
+            document.getElementById('sop-cegesoft').innerText = formatVal(wCegesoft);
+            document.getElementById('sop-dpg').innerText = formatVal(wDpg);
+            document.getElementById('sop-tonalid').innerText = formatVal(wTonalid);
+        }
+
+        // ฟังก์ชันตั้งค่าขนาดถังผลิตอย่างรวดเร็ว (Preset Buttons)
+        function setPreset(value, unit) {
+            document.getElementById('batchSize').value = value;
+            document.getElementById('unit').value = unit;
+            calculateFormula();
+        }
+
+        // สั่งทำงานฟังก์ชันคำนวณทันทีเมื่อผู้ใช้เปิดหน้าจอครั้งแรก
+        calculateFormula();
+    </script>
+
+</body>
+</html>
